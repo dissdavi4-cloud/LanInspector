@@ -14,50 +14,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar repositório
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Instalar Java 17
+      - name: Configurar Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Instalar ferramentas Android
-        run: |
-          sdkmanager "platforms;android-35"
-          sdkmanager "build-tools;35.0.0"
 
       - name: Extrair projeto ZIP
         run: |
           ZIP=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
 
           if [ -z "$ZIP" ]; then
-            echo "ERRO: Nenhum arquivo ZIP encontrado!"
+            echo "Nenhum ZIP encontrado!"
             exit 1
           fi
 
-          echo "Extraindo: $ZIP"
           mkdir -p extracted
           unzip -q "$ZIP" -d extracted
 
-      - name: Localizar projeto Gradle
+      - name: Localizar projeto
         run: |
           SETTINGS=$(find extracted -name settings.gradle -type f | head -n 1)
 
           if [ -z "$SETTINGS" ]; then
-            echo "ERRO: settings.gradle não encontrado dentro do ZIP!"
-            find extracted -maxdepth 4 -type f
+            echo "settings.gradle não encontrado!"
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$SETTINGS")
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
-          echo "Projeto encontrado em: $PROJECT_DIR"
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
