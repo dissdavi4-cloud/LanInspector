@@ -3,8 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 permissions:
   contents: read
@@ -12,10 +11,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Configurar Java 17
         uses: actions/setup-java@v4
@@ -23,43 +20,17 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extrair projeto ZIP
-        run: |
-          ZIP=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
-
-          if [ -z "$ZIP" ]; then
-            echo "Nenhum ZIP encontrado!"
-            exit 1
-          fi
-
-          mkdir -p extracted
-          unzip -q "$ZIP" -d extracted
-
-      - name: Localizar projeto
-        run: |
-          SETTINGS=$(find extracted -name settings.gradle -type f | head -n 1)
-
-          if [ -z "$SETTINGS" ]; then
-            echo "settings.gradle não encontrado!"
-            exit 1
-          fi
-
-          PROJECT_DIR=$(dirname "$SETTINGS")
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
       - name: Compilar APK
-        run: |
-          cd "$PROJECT_DIR"
-          gradle --no-daemon assembleDebug
+        run: gradle --no-daemon assembleDebug
 
       - name: Publicar APK
         uses: actions/upload-artifact@v4
         with:
-          name: LANInspector-APK
-          path: extracted/**/app/build/outputs/apk/debug/app-debug.apk
+          name: LANInspector-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
